@@ -53,6 +53,12 @@ print("MobileNetV2 loaded successfully.")
 # Path to embeddings file
 EMBEDDINGS_FILE = "embeddings.pkl"
 
+# Load embeddings once at startup
+print("Loading embeddings...")
+with open(EMBEDDINGS_FILE, "rb") as f:
+    embeddings_data = pickle.load(f)
+print(f"Loaded {len(embeddings_data)} embeddings.")
+
 # Feature extraction function
 def extract_features_from_image(img):
 
@@ -84,7 +90,7 @@ def read_root():
     return {
         "status": "online",
         "message": "DressUp AI ML Recommendation Server is running!",
-        "embeddings_loaded": os.path.exists(EMBEDDINGS_FILE)
+        "total_embeddings": len(embeddings_data)
     }
 
 @app.post("/recommend")
@@ -105,62 +111,53 @@ async def recommend_similar(
         # Extract features
         query_features = extract_features_from_image(img)
 
-        # Load embeddings
-        with open(EMBEDDINGS_FILE, "rb") as f:
-
-            embeddings = pickle.load(f)
-
         results = []
 
-        # Compare embeddings
-        for file_path, features in embeddings:
+        for item in embeddings_data:
 
             similarity = cosine_similarity(
                 [query_features],
-                [features]
+                [item["features"]]
             )[0][0]
 
-            results.append(
-                (
-                    file_path,
-                    float(similarity)
-                )
-            )
+            results.append({
+                "path": item["path"],
+                "score": float(similarity),
+                "category": item["category"],
+                "gender": item["gender"],
+                "subcategory": item["subcategory"]
+            })
 
-        # Sort descending
         results = sorted(
             results,
-            key=lambda x: x[1],
+            key=lambda x: x["score"],
             reverse=True
         )
 
-        # Top matches
         top_matches = results[:5]
 
         response = []
 
-        for file_path, score in top_matches:
+        for item in top_matches:
 
             image_url = (
                 "http://127.0.0.1:8000/"
-                + file_path.replace("\\", "/")
+                + item["path"].replace("\\", "/")
             )
 
             response.append({
-
                 "image": image_url,
-
-                "score": round(score, 2)
-
+                "score": round(item["score"], 2),
+                "category": item["category"],
+                "gender": item["gender"],
+                "subcategory": item["subcategory"]
             })
 
         return {
-
             "success": True,
-
             "matches": response
-
         }
+
 
     except Exception as e:
 

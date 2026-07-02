@@ -1,17 +1,8 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
+.venv
 .venv/
+venv
 venv/
-ENV/
-env/
-
-# ML database artifacts
+__pycache__/
+*.pyc
 embeddings.pkl
-
-# IDE files
 .vscode/
-.idea/
