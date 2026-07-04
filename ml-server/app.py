@@ -1,8 +1,5 @@
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.middleware.cors import CORSMiddleware
-
-
-
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from io import BytesIO
@@ -10,7 +7,7 @@ from ML_Model import find_similar
 import os
 
 app = FastAPI(
-    title="DressUp AI ML Recommendation Server",
+    title="Style Sync ML Recommendation Server",
     description="MobileNetV2 based feature extraction and visual similarity recommendation",
     version="1.0.0"
 )
@@ -23,8 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 # Dataset path
 DATASET_DIR = "../dataset"
@@ -39,14 +34,11 @@ app.mount(
     name="dataset"
 )
 
-
-
-
 @app.get("/")
 def read_root():
     return {
         "status": "online",
-        "message": "DressUp AI ML Recommendation Server is running!",
+        "message": "Style Sync ML Recommendation Server is running!",
         
     }
 
