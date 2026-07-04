@@ -1,13 +1,12 @@
 from fastapi import FastAPI,HTTPException,UploadFile,File
 from fastapi.middleware.cors import CORSMiddleware
-from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
-from keras.preprocessing import image
-from sklearn.metrics.pairwise import cosine_similarity
+
+
+
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from io import BytesIO
-import numpy as np
-import pickle
+from ML_Model import find_similar
 import os
 
 app = FastAPI(
@@ -41,56 +40,14 @@ app.mount(
 )
 
 
-# Load MobileNet model
-print("Loading MobileNetV2 model...")
-model = MobileNetV2(
-    weights='imagenet',
-    include_top=False,
-    pooling='avg'
-)
-print("MobileNetV2 loaded successfully.")
 
-# Path to embeddings file
-EMBEDDINGS_FILE = "embeddings.pkl"
-
-# Load embeddings once at startup
-print("Loading embeddings...")
-with open(EMBEDDINGS_FILE, "rb") as f:
-    embeddings_data = pickle.load(f)
-print(f"Loaded {len(embeddings_data)} embeddings.")
-
-# Feature extraction function
-def extract_features_from_image(img):
-
-    img = img.resize((224, 224))
-
-    if img.mode != "RGB":
-
-        img = img.convert("RGB")
-
-    img_array = image.img_to_array(img)
-
-    img_array = np.expand_dims(
-        img_array,
-        axis=0
-    )
-
-    img_array = preprocess_input(
-        img_array
-    )
-
-    features = model.predict(
-        img_array
-    )
-
-    return features.flatten()
 
 @app.get("/")
 def read_root():
     return {
         "status": "online",
         "message": "DressUp AI ML Recommendation Server is running!",
-        "total_embeddings": len(embeddings_data)
+        
     }
 
 @app.post("/recommend")
@@ -108,33 +65,9 @@ async def recommend_similar(
             BytesIO(contents)
         )
 
-        # Extract features
-        query_features = extract_features_from_image(img)
+        top_matches = find_similar(img)
 
-        results = []
 
-        for item in embeddings_data:
-
-            similarity = cosine_similarity(
-                [query_features],
-                [item["features"]]
-            )[0][0]
-
-            results.append({
-                "path": item["path"],
-                "score": float(similarity),
-                "category": item["category"],
-                "gender": item["gender"],
-                "subcategory": item["subcategory"]
-            })
-
-        results = sorted(
-            results,
-            key=lambda x: x["score"],
-            reverse=True
-        )
-
-        top_matches = results[:5]
 
         response = []
 
