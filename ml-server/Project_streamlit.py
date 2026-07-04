@@ -78,6 +78,7 @@ if uploaded_file is not None:
                                     "Similarity",
                                     f"{item['score']:.2f}"
                                 )
+                                st.caption(f"{item['gender']} • {item['category']} • {item['subcategory']}")
 
                     else:
 
