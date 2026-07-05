@@ -1,5 +1,6 @@
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
 from sklearn.metrics.pairwise import cosine_similarity
 from PIL import Image
 import numpy as np
@@ -13,6 +14,19 @@ model = MobileNetV2(
     pooling='avg'
 )
 print("MobileNetV2 loaded successfully.")
+
+# Load classifier model
+print("Loading classifier model...")
+classifier = load_model("best_model.keras")
+print("Classifier loaded successfully.")
+
+# Class labels
+CLASS_LABELS = [
+    'Casual Shoes', 'Flip Flops', 'Formal Shoes', 'Heels',
+    'Jeans', 'Kurtas', 'Leggings', 'Sandals', 'Shirts',
+    'Shorts', 'Sports Shoes', 'Tops', 'Track Pants',
+    'Trousers', 'Tshirts'
+]
 
 # Load embeddings
 print("Loading embeddings...")
@@ -49,3 +63,19 @@ def find_similar(img: Image.Image, top_k: int = 5):
         })
     results = sorted(results, key=lambda x: x["score"], reverse=True)
     return results[:top_k]
+
+# Classify image function
+def classify_image(img: Image.Image):
+    img_resized = img.resize((224, 224))
+    if img_resized.mode != "RGB":
+        img_resized = img_resized.convert("RGB")
+    img_array = image.img_to_array(img_resized)
+    img_array = np.expand_dims(img_array, axis=0)
+    img_array = img_array / 255.0
+    predictions = classifier.predict(img_array, verbose=0)
+    predicted_index = np.argmax(predictions[0])
+    confidence = float(predictions[0][predicted_index])
+    return {
+        "articleType": CLASS_LABELS[predicted_index],
+        "confidence": round(confidence, 2)
+    }
