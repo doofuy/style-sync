@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("👕 DressUp AI")
+st.title("👠 Style Sync")
 st.subheader("AI-Powered Clothing Recommendation System")
 
 # Upload Image
