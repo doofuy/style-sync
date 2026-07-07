@@ -125,7 +125,7 @@ async def recommend_outfit_endpoint(
             "outfit": {
                 slot: {
                     "articleType": item["articleType"],
-                    "confidence": item["confidence"]
+                    
                 } if item else None
                 for slot, item in result["outfit"].items()
             }
