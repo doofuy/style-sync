@@ -9,3 +9,7 @@ ML Model and app.py code separated and cleaned successfully
 
 Image classification is live on server.
 ML model is trained to identify any image and tell its category
+
+Outfit Recommendation is live as well
+
+PUSH TO MASTER ASAP
