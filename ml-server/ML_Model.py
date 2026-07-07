@@ -79,3 +79,63 @@ def classify_image(img: Image.Image):
         "articleType": CLASS_LABELS[predicted_index],
         "confidence": round(confidence, 2)
     }
+
+# Occasion rules
+OCCASION_RULES = {
+    "college": {
+        "topwear": ["Tshirts", "Shirts", "Tops", "Kurtas"],
+        "bottomwear": ["Jeans", "Shorts", "Trousers", "Track Pants"],
+        "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops"]
+    },
+    "date": {
+        "topwear": ["Shirts", "Tops", "Kurtas"],
+        "bottomwear": ["Jeans", "Trousers"],
+        "footwear": ["Casual Shoes", "Formal Shoes", "Heels", "Sandals"]
+    },
+    "interview": {
+        "topwear": ["Shirts", "Kurtas"],
+        "bottomwear": ["Trousers", "Jeans"],
+        "footwear": ["Formal Shoes", "Casual Shoes"]
+    },
+    "casual": {
+        "topwear": ["Tshirts", "Shirts", "Tops", "Kurtas"],
+        "bottomwear": ["Jeans", "Shorts", "Track Pants", "Leggings"],
+        "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops", "Sandals"]
+    }
+}
+
+# Recommend outfit function
+def recommend_outfit(wardrobe: list, occasion: str):
+    occasion = occasion.lower()
+    
+    if occasion not in OCCASION_RULES:
+        return {"error": f"Occasion '{occasion}' not supported. Use: college, date, interview, casual"}
+    
+    rules = OCCASION_RULES[occasion]
+    
+    # Classify all wardrobe items
+    classified = []
+    for item in wardrobe:
+        result = classify_image(item["image"])
+        classified.append({
+            "articleType": result["articleType"],
+            "confidence": result["confidence"],
+            "image": item["image"]
+        })
+    
+    # Pick best item for each slot
+    outfit = {}
+    
+    for slot, allowed_types in rules.items():
+        best = None
+        best_score = 0
+        for item in classified:
+            if item["articleType"] in allowed_types and item["confidence"] > best_score:
+                best = item
+                best_score = item["confidence"]
+        outfit[slot] = best
+    
+    return {
+        "occasion": occasion,
+        "outfit": outfit
+    }

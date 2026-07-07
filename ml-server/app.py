@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from io import BytesIO
-from ML_Model import find_similar, classify_image
+from ML_Model import find_similar, classify_image, recommend_outfit
 import os
 
 app = FastAPI(
@@ -105,6 +105,34 @@ async def classify(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+@app.post("/recommend-outfit")
+async def recommend_outfit_endpoint(
+    occasion: str,
+    files: list[UploadFile] = File(default = [])
+):
+    try:
+        wardrobe = []
+        for f in files:
+            contents = await f.read()
+            img = Image.open(BytesIO(contents))
+            wardrobe.append({"image": img})
+        
+        result = recommend_outfit(wardrobe, occasion)
+        
+        return {
+            "success": True,
+            "occasion": result["occasion"],
+            "outfit": {
+                slot: {
+                    "articleType": item["articleType"],
+                    "confidence": item["confidence"]
+                } if item else None
+                for slot, item in result["outfit"].items()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
