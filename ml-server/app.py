@@ -115,7 +115,8 @@ async def recommend_outfit_endpoint(
         for f in files:
             contents = await f.read()
             img = Image.open(BytesIO(contents))
-            wardrobe.append({"image": img})
+            wardrobe.append({
+                "image": img })
         
         result = recommend_outfit(wardrobe, occasion)
         
@@ -125,6 +126,7 @@ async def recommend_outfit_endpoint(
             "outfit": {
                 slot: {
                     "articleType": item["articleType"],
+                    
                     
                 } if item else None
                 for slot, item in result["outfit"].items()

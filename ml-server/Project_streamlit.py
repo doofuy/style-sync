@@ -63,7 +63,9 @@ with tab2:
     )
 
     if uploaded_file2 is not None:
+        uploaded_file2.seek(0)
         image2 = Image.open(uploaded_file2)
+        image2.load()   # Force PIL to read the image completely
         col1, col2 = st.columns([1, 2])
 
         with col1:
@@ -109,7 +111,10 @@ with tab3:
         cols = st.columns(len(wardrobe_files))
         for idx, f in enumerate(wardrobe_files):
             with cols[idx]:
-                st.image(Image.open(f), use_container_width=True)
+                f.seek(0)
+                img = Image.open(f)
+                img.load()
+                st.image(img, use_container_width=True)
                 st.caption(f.name)
 
         if st.button("Get Outfit Recommendation"):
