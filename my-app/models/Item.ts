@@ -1,20 +1,14 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IItem extends Document {
-  collectionId: mongoose.Types.ObjectId;
   name: string;
   imageUrl: string;
+  collectionId: mongoose.Types.ObjectId;
   order: number;
 }
 
 const ItemSchema = new Schema<IItem>(
   {
-    collectionId: {
-      type: Schema.Types.ObjectId,
-      ref: "Collection",
-      required: true,
-    },
-
     name: {
       type: String,
       required: true,
@@ -24,6 +18,12 @@ const ItemSchema = new Schema<IItem>(
     imageUrl: {
       type: String,
       default: "",
+    },
+
+    collectionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Collection",
+      required: true,
     },
 
     order: {

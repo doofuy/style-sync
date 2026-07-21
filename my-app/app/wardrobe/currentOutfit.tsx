@@ -24,7 +24,9 @@ export default function SelectedOutfit({
 
   return (
     <div className="mt-8 rounded-xl border border-[color-mix(in_srgb,var(--color-violet-600)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-violet-600)_1%,transparent)] p-5 shadow-sm">
-      <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-200">Current Outfit</h2>
+      <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-200">
+        Current Outfit
+      </h2>
 
       {/* OPERATION: Display placeholder message if no items are selected, otherwise render the outfit cards */}
       {!hasSelections ? (
@@ -87,7 +89,3 @@ export default function SelectedOutfit({
     </div>
   );
 }
-
-
-
-

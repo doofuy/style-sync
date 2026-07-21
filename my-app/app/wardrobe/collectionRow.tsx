@@ -11,6 +11,7 @@ interface CollectionRowProps {
   >;
   onAddItem: (collectionId: string) => void; // Callback to open the Add Item modal for this collection
   onDeleteItem: (collectionId: string, itemId: string) => void; // Callback to delete a wardrobe item
+  onDeleteCollection: (collection: Collection) => void; // Callback to open delete confirmation modal for a collection
   onEditImage: (collectionId: string, itemId: string) => void; // Callback to open the Edit Image modal for a specific item
   onReorderItems: (collectionId: string, updatedItems: Item[]) => void; // Callback to trigger collections state reorder on drop
 }
@@ -21,6 +22,7 @@ export default function CollectionRow({
   setSelectedItems,
   onAddItem,
   onDeleteItem,
+  onDeleteCollection,
   onEditImage,
   onReorderItems,
 }: CollectionRowProps) {
@@ -49,16 +51,25 @@ export default function CollectionRow({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold">{collection.name}</h2>
 
-        {/* OPERATION: Open the "Add Item" modal for this collection when clicked */}
-        <button
-          onClick={() => {
-            console.log("ADD ITEM CLICKED", collection.id);
-            onAddItem(collection.id);
-          }}
-          className="rounded-lg border px-3 py-1 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
-        >
-          + Add Item
-        </button>
+        <div className="flex gap-2">
+          {/* OPERATION: Open the "Add Item" modal for this collection when clicked */}
+          <button
+            onClick={() => {
+              console.log("ADD ITEM CLICKED", collection.id);
+              onAddItem(collection.id);
+            }}
+            className="rounded-lg border px-3 py-1 text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+          >
+            + Add Item
+          </button>
+          
+          <button
+            onClick={() => onDeleteCollection(collection)}
+            className="rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 px-3 py-1 text-sm cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {/* ITEMS GALLERY: Lists items horizontally with overflow scrolling */}

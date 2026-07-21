@@ -3,6 +3,13 @@ import Logo from "./logo";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 
+import {
+  Show,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+
 export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b">
@@ -35,14 +42,28 @@ export default function Navbar() {
           </div>
 
           {/* Actions Section */}
+          {/* Actions Section */}
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Signup</Link>
-            </Button>
-            
+            <Show when="signed-out">
+              <SignInButton mode="redirect">
+                <Button variant="ghost">Login</Button>
+              </SignInButton>
+
+              <SignUpButton mode="redirect">
+                <Button>Signup</Button>
+              </SignUpButton>
+            </Show>
+
+            <Show when="signed-in">
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </Show>
+
             {/* Theme Toggle */}
             <ModeToggle />
           </div>
