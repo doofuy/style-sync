@@ -2,10 +2,28 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Item from "@/models/Item";
 
+// authorization
+import { auth } from "@clerk/nextjs/server";
+import Collection from "@/models/Collection";
+
 export async function POST(req: NextRequest) {
   try {
     // connect to the database
     await connectDB();
+
+    // ---authorization
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
 
     // get data from frontend
     const { name, imageUrl, collectionId } = await req.json();
@@ -19,11 +37,44 @@ export async function POST(req: NextRequest) {
         },
         {
           status: 400,
-        }
+        },
+      );
+    }
+
+    // ---authorization
+    const collection = await Collection.findOne({
+      _id: collectionId,
+      userId,
+    });
+
+    if (!collection) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Collection not found",
+        },
+        {
+          status: 404,
+        },
       );
     }
 
     // business logic
+      // ML response:---
+      const mlResponse = await fetch("http://127.0.0.1:8000/classify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl,
+        }),
+      });
+
+
+      const mlData = await mlResponse.json()
+      const articleType = mlData.articleType
+
     const count = await Item.countDocuments({
       collectionId,
     });
@@ -32,8 +83,11 @@ export async function POST(req: NextRequest) {
       name,
       imageUrl,
       collectionId,
+      articleType,
       order: count,
     });
+
+    
 
     // success response
     return NextResponse.json(
@@ -43,7 +97,7 @@ export async function POST(req: NextRequest) {
       },
       {
         status: 201,
-      }
+      },
     );
   } catch (error) {
     console.error(error);
@@ -55,11 +109,12 @@ export async function POST(req: NextRequest) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
+// not in use, using aggregation pipeline to fetch all the items
 export async function GET(req: Request) {
   try {
     await connectDB();
@@ -76,7 +131,7 @@ export async function GET(req: Request) {
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -93,7 +148,7 @@ export async function GET(req: Request) {
       },
       {
         status: 200,
-      }
+      },
     );
   } catch (error) {
     console.error(error);
@@ -105,7 +160,7 @@ export async function GET(req: Request) {
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

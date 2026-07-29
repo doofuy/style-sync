@@ -14,20 +14,27 @@ export default function WardrobeClient() {
   const [collections, setCollections] = useState<Collection[]>([]);
 
   // Fetch wardrobe collections and items from API
-  useEffect(() => {
-    const fetchWardrobe = async () => {
-      try {
-        const res = await fetch("/api/wardrobe");
-        const data = await res.json();
-        if (data.success && Array.isArray(data.collections)) {
-          setCollections(data.collections);
-        }
-      } catch (err) {
-        console.error("Failed to fetch wardrobe:", err);
+  const fetchWardrobe = async () => {
+    try {
+      const res = await fetch("/api/wardrobe");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.collections)) {
+        setCollections(data.collections);
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch wardrobe:", err);
+    }
+  };
+
+  useEffect(() => {
+    console.log("Fetching wardrobe...");
     fetchWardrobe();
   }, []);
+
+  // STATE: Manage visibility, state variables, and upload indicators for the AI Upload section
+  const [aiUploadFile, setAiUploadFile] = useState<File | null>(null);
+  const [aiUploadName, setAiUploadName] = useState("");
+  const [isAiOrganizing, setIsAiOrganizing] = useState(false);
 
   console.log("RENDER:", collections);
 
@@ -60,6 +67,7 @@ export default function WardrobeClient() {
           items: [],
         };
         setCollections((prev) => [...prev, newCollection]);
+        showToast("Collection created successfully!");
       }
     } catch (error) {
       console.error("Failed to create collection:", error);
@@ -93,6 +101,13 @@ export default function WardrobeClient() {
   const [collectionToDelete, setCollectionToDelete] =
     useState<Collection | null>(null);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
+
+  // STATE: Toast Notification
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // HELPER: Uploads an image file to the `/api/upload` endpoint (Cloudinary backend)
   const uploadImageFile = async (file: File): Promise<string | null> => {
@@ -137,7 +152,7 @@ export default function WardrobeClient() {
     if (url) {
       setItemImageUrl(url);
     } else {
-      alert("Failed to upload image. Please try again.");
+      showToast("Failed to upload image. Please try again.", "error");
     }
     setIsUploadingItem(false);
   };
@@ -153,7 +168,7 @@ export default function WardrobeClient() {
     if (url) {
       setEditImageUrl(url);
     } else {
-      alert("Failed to upload image. Please try again.");
+      showToast("Failed to upload image. Please try again.", "error");
     }
     setIsUploadingEdit(false);
   };
@@ -349,6 +364,7 @@ export default function WardrobeClient() {
               : collection,
           ),
         );
+        showToast("Item added successfully!");
       }
     } catch (error) {
       console.error("Failed to create item:", error);
@@ -358,6 +374,50 @@ export default function WardrobeClient() {
     setItemImageUrl("");
     setActiveCollectionId(null);
     setIsItemModalOpen(false);
+  };
+
+  // OPERATION: AI Classification and Organization
+  const handleAiUploadAndOrganize = async () => {
+    if (!aiUploadFile || !aiUploadName.trim()) return;
+
+    setIsAiOrganizing(true);
+    try {
+      // 1. Upload to Cloudinary
+      const imageUrl = await uploadImageFile(aiUploadFile);
+      if (!imageUrl) {
+        showToast("Failed to upload image. Please try again.", "error");
+        setIsAiOrganizing(false);
+        return;
+      }
+
+      // 2. Call ML API
+      const res = await fetch("/api/items/auto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: aiUploadName,
+          imageUrl: imageUrl,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // 3. Success state
+        setAiUploadFile(null);
+        setAiUploadName("");
+        showToast("Item organized successfully into " + data.collection + "!");
+        
+        // 4. Refresh wardrobe data
+        await fetchWardrobe();
+      } else {
+        showToast(data.message || "Failed to classify and organize image.", "error");
+      }
+    } catch (error) {
+      console.error("AI Upload Error:", error);
+      showToast("An unexpected error occurred during AI Upload.", "error");
+    } finally {
+      setIsAiOrganizing(false);
+    }
   };
 
   return (
@@ -691,6 +751,105 @@ export default function WardrobeClient() {
         </div>
       )}
 
+      {/* AI UPLOAD SECTION */}
+      <div className="mt-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <span>🤖</span> AI Upload
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Upload a clothing image and let AI automatically organize it into the correct collection.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 max-w-xl">
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1.5 block">
+              Image Upload
+            </label>
+            {!aiUploadFile ? (
+              <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer group">
+                <svg
+                  className="w-8 h-8 text-slate-400 group-hover:text-violet-500 mb-2 transition-colors"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Click to browse or drag & drop</span>
+                <span className="text-xs text-slate-400 mt-1">Accepts only image files</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setAiUploadFile(file);
+                  }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  disabled={isAiOrganizing}
+                />
+              </div>
+            ) : (
+              <div className="border border-slate-200 dark:border-slate-800 rounded-lg p-4 bg-slate-50 dark:bg-slate-900 flex flex-col sm:flex-row items-center gap-4">
+                <div className="h-24 w-24 shrink-0 rounded border bg-white dark:bg-slate-800 overflow-hidden flex items-center justify-center">
+                  <img
+                    src={URL.createObjectURL(aiUploadFile)}
+                    alt="AI Upload Preview"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-col flex-grow items-start">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate w-48 mb-2">
+                    {aiUploadFile.name}
+                  </span>
+                  <button
+                    onClick={() => setAiUploadFile(null)}
+                    disabled={isAiOrganizing}
+                    className="text-xs text-red-500 hover:text-red-600 font-medium cursor-pointer"
+                  >
+                    Remove / Change
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-slate-500 mb-1 block">
+              Item Name
+            </label>
+            <input
+              value={aiUploadName}
+              onChange={(e) => setAiUploadName(e.target.value)}
+              placeholder="e.g. Blue Oversized T-Shirt"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-sm bg-background"
+              disabled={isAiOrganizing}
+            />
+          </div>
+
+          <div className="mt-2">
+            <button
+              onClick={handleAiUploadAndOrganize}
+              disabled={!aiUploadFile || !aiUploadName.trim() || isAiOrganizing}
+              className="w-full sm:w-auto rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium px-6 py-2.5 text-sm transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            >
+              {isAiOrganizing ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Organizing...
+                </>
+              ) : (
+                "Upload & Organize"
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* OPERATION: Renders the horizontal rows for Sneakers, Caps, and other collections dynamically */}
       <div className="mt-8">
         {collections.map((collection) => (
@@ -709,6 +868,24 @@ export default function WardrobeClient() {
       </div>
 
       <div className="mt-8 border-t pt-6"></div>
+
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className={`fixed bottom-4 right-4 z-50 p-4 rounded-lg shadow-lg border transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 ${
+          toast.type === "success" 
+            ? "bg-green-50 border-green-200 text-green-800 dark:bg-green-950/80 dark:border-green-900 dark:text-green-300" 
+            : "bg-red-50 border-red-200 text-red-800 dark:bg-red-950/80 dark:border-red-900 dark:text-red-300"
+        }`}>
+          <div className="flex items-center gap-2">
+            {toast.type === "success" ? (
+              <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"/></svg>
+            ) : (
+              <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            )}
+            <p className="text-sm font-medium">{toast.message}</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -5,6 +5,7 @@ export interface IItem extends Document {
   imageUrl: string;
   collectionId: mongoose.Types.ObjectId;
   order: number;
+  articleType: string;
 }
 
 const ItemSchema = new Schema<IItem>(
@@ -30,14 +31,18 @@ const ItemSchema = new Schema<IItem>(
       type: Number,
       default: 0,
     },
+
+    articleType: {
+      type: String,
+      defaule: null,
+    },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Item: Model<IItem> =
-  mongoose.models.Item ||
-  mongoose.model<IItem>("Item", ItemSchema);
+  mongoose.models.Item || mongoose.model<IItem>("Item", ItemSchema);
 
 export default Item;
