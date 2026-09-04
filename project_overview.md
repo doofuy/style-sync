@@ -1,11 +1,11 @@
-# DressUp AI Project Overview & Structure
+# StyleSync Project Overview & Structure
 
-This document provides a clean, comprehensive description of the **DressUp AI** full-stack visual recommendation project structure, tech stack, and component hierarchy. It is structured for easy sharing with other AI coding assistants.
+This document provides a clean, comprehensive description of the **StyleSync** full-stack visual recommendation project structure, tech stack, and component hierarchy. It is structured for easy sharing with other AI coding assistants.
 
 ---
 
 ## 📌 Project Summary
-**DressUp AI** is a visual clothing recommendation application. It contains two main components:
+**StyleSync** is a visual clothing recommendation application. It contains two main components:
 1. **Next.js Web Client (`my-app/`)**: A modern web interface using Next.js, React, Tailwind CSS v4, and Cloudinary for photo uploads.
 2. **FastAPI ML Server (`ml-server/`)**: A Python-based backend that uses `MobileNetV2` (via Keras/TensorFlow) to perform image feature extraction, comparing uploaded query images against a database of clothes using `cosine_similarity` (scikit-learn).
 

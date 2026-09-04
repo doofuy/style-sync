@@ -62,10 +62,28 @@ export async function DELETE(req: NextRequest, { params }: Props) {
       _id: id,
     });
 
+    // Check if the collection has zero remaining items
+    const remainingCount = await Item.countDocuments({
+      collectionId: collection._id,
+    });
+
+    let collectionDeleted = false;
+    if (remainingCount === 0) {
+      await Collection.deleteOne({
+        _id: collection._id,
+        userId,
+      });
+      collectionDeleted = true;
+    }
+
     return NextResponse.json(
       {
         success: true,
-        message: "Item deleted successfully",
+        message: collectionDeleted
+          ? "Item and empty collection deleted successfully"
+          : "Item deleted successfully",
+        collectionDeleted,
+        collectionId: collection._id.toString(),
       },
       {
         status: 200,

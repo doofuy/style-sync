@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: "dressupai",
+          folder: "stylesync",
         },
         (error, result) => {
           if (error) {

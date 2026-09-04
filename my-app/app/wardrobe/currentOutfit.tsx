@@ -13,30 +13,37 @@ export default function SelectedOutfit({
   selectedItems,
   onDeselect,
 }: SelectedOutfitProps) {
-  // FEATURE: Filter out collections where no item is currently selected (or if the selected item was deleted)
+  // Filter out collections where no item is currently selected
   const selectedCollections = collections.filter((collection) => {
     const selectedItemId = selectedItems[collection.id];
     return collection.items.some((item) => item.id === selectedItemId);
   });
 
-  // FEATURE: Determine if there are any active valid selections in the outfit
   const hasSelections = selectedCollections.length > 0;
 
   return (
-    <div className="mt-8 rounded-xl border border-[color-mix(in_srgb,var(--color-violet-600)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-violet-600)_1%,transparent)] p-5 shadow-sm">
-      <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-200">
-        Current Outfit
-      </h2>
+    <div className="my-8">
+      <div className="mb-3 flex items-baseline justify-between border-b border-border/40 pb-2">
+        <h2 className="text-[11px] sm:text-xs uppercase tracking-[0.25em] font-bold text-foreground">
+          Current Look
+        </h2>
+        {hasSelections && (
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
+            {selectedCollections.length} {selectedCollections.length === 1 ? "Piece" : "Pieces"}
+          </span>
+        )}
+      </div>
 
-      {/* OPERATION: Display placeholder message if no items are selected, otherwise render the outfit cards */}
       {!hasSelections ? (
-        <p className="text-sm text-muted-foreground">No items selected yet</p>
+        <div className="border border-dashed border-border bg-card/60 p-6 text-center">
+          <p className="text-[11px] uppercase tracking-[0.2em] font-medium text-muted-foreground">
+            No items selected yet — click items below to build your look
+          </p>
+        </div>
       ) : (
-        <div className="flex flex-wrap gap-4 pt-1">
-          {/* OPERATION: Map over filtered collections to display each selected item as a premium squad-building card */}
+        <div className="flex gap-0 overflow-x-auto border border-border bg-card scrollbar-thin">
           {selectedCollections.map((collection) => {
             const selectedItemId = selectedItems[collection.id];
-
             const selectedItem = collection.items.find(
               (item) => item.id === selectedItemId,
             )!;
@@ -44,42 +51,35 @@ export default function SelectedOutfit({
             return (
               <div
                 key={collection.id}
-                className="relative flex h-36 w-32 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 group select-none transition-all duration-300 hover:shadow-md hover:scale-[1.02]"
+                className="relative flex h-52 w-36 sm:h-56 sm:w-40 shrink-0 flex-col overflow-hidden border-r border-border bg-card select-none group transition-colors duration-200"
               >
-                {/* FEATURE: Category label badge at the top-left of the card (resembles FIFA position badge) */}
-                <div className="absolute top-2 left-2 z-10 bg-slate-800/80 dark:bg-slate-950/80 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded backdrop-blur-xs">
-                  {collection.name}
-                </div>
+                {/* Image Container with clipped zoom */}
+                <div className="relative flex-1 w-full overflow-hidden bg-muted/20 flex items-center justify-center">
+                  {/* Subtle top scrim + clean category label */}
+                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent p-2 z-10 flex items-center justify-between">
+                    <span className="text-[9px] uppercase tracking-[0.22em] font-bold text-white/95">
+                      {collection.name}
+                    </span>
+                    <button
+                      onClick={() => onDeselect(collection.id)}
+                      className="flex h-4 w-4 items-center justify-center rounded-full bg-black/40 text-white hover:bg-primary transition-colors cursor-pointer"
+                      title={`Remove ${selectedItem.name} from outfit`}
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
 
-                {/* FEATURE: Top right corner circular close button with lucide X icon to deselect this item from the outfit */}
-                <button
-                  onClick={() => onDeselect(collection.id)}
-                  className="absolute top-2 right-2 z-10 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-slate-800/80 text-white hover:bg-violet-600 dark:bg-slate-950/80 dark:hover:bg-violet-500 transition-colors duration-200 cursor-pointer shadow-xs backdrop-blur-xs"
-                  title={`Remove ${selectedItem.name} from outfit`}
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-
-                {/* IMAGE AREA: Displays the clothing image or a premium placeholder */}
-                <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-slate-950">
                   {selectedItem.imageUrl ? (
                     <img
                       src={selectedItem.imageUrl}
                       alt={selectedItem.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-slate-400 text-[10px]">
-                      <span className="font-medium">No Image</span>
+                    <div className="flex flex-col items-center justify-center text-muted-foreground text-[10px] font-serif italic">
+                      <span>No Image</span>
                     </div>
                   )}
-                </div>
-
-                {/* CARD FOOTER: Displays the selected item name */}
-                <div className="p-2 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20">
-                  <p className="truncate text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {selectedItem.name}
-                  </p>
                 </div>
               </div>
             );
@@ -88,4 +88,4 @@ export default function SelectedOutfit({
       )}
     </div>
   );
-``}
+}

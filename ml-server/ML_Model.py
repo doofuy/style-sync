@@ -92,22 +92,22 @@ def classify_image(img: Image.Image):
 # Occasion rules
 OCCASION_RULES = {
     "college": {
-        "topwear": ["Tshirts", "Shirts", "Tops", "Kurtas"],
+        "topwear": ["Tshirts", "Shirts", "Tops"],
         "bottomwear": ["Jeans", "Shorts", "Trousers", "Track Pants"],
         "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops"]
     },
     "date": {
-        "topwear": ["Shirts", "Tops", "Kurtas"],
+        "topwear": ["Shirts", "Tops"],
         "bottomwear": ["Jeans", "Trousers"],
         "footwear": ["Casual Shoes", "Formal Shoes", "Heels", "Sandals"]
     },
     "interview": {
-        "topwear": ["Shirts", "Kurtas"],
+        "topwear": ["Shirts"],
         "bottomwear": ["Trousers", "Jeans"],
         "footwear": ["Formal Shoes", "Casual Shoes"]
     },
     "casual": {
-        "topwear": ["Tshirts", "Shirts", "Tops", "Kurtas"],
+        "topwear": ["Tshirts", "Shirts", "Tops"],
         "bottomwear": ["Jeans", "Shorts", "Track Pants", "Leggings"],
         "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops", "Sandals"]
     }
