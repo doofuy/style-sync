@@ -80,25 +80,6 @@ export default function WardrobeCard({
           </button>
         )}
       </div>
-
-      {/* FOOTER SECTION: Displays the wardrobe item name */}
-      <div
-        className={`p-3 text-center border-t transition-colors duration-300 ${
-          isSelected
-            ? "border-[color-mix(in_srgb,var(--color-violet-600)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-violet-600)_2%,transparent)] dark:border-slate-800"
-            : "border-slate-100 dark:border-slate-800"
-        }`}
-      >
-        <p
-          className={`truncate text-sm font-semibold ${
-            isSelected
-              ? "text-[var(--color-violet-600)] dark:text-[var(--color-violet-400)]"
-              : "text-slate-700 dark:text-slate-300"
-          }`}
-        >
-          {item.name}
-        </p>
-      </div>
     </div>
   );
 }

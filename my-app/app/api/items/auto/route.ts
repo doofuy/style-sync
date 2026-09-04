@@ -26,15 +26,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // get data from frontend, NOTE the request is coming from the frontend so we get the imageUrl. The frontend uploads the image to Cloudinary first, gets back the URL, and then sends that URL to this API.
+    // get data from frontend
     const { name, imageUrl } = await req.json();
 
-    // validate the input from frontend
-    if (!name || !imageUrl) {
+    // validate input from frontend
+    if (!imageUrl) {
       return NextResponse.json(
         {
           success: false,
-          message: "missing required fields",
+          message: "imageUrl is required",
         },
         {
           status: 400,
@@ -45,30 +45,47 @@ export async function POST(req: NextRequest) {
     // ---authorization
 
     // business logic
-        // ML response
+    // ML response
+    const mlServerUrl = process.env.ML_SERVER_URL
+      ? `${process.env.ML_SERVER_URL}/classify`
+      : "http://127.0.0.1:8000/classify";
 
-        const mlResponse = await fetch("http://127.0.0.1:8000/classify", {
+    let mlResponse;
+    try {
+      mlResponse = await fetch(mlServerUrl, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            imageUrl,
+          imageUrl,
         }),
-        });
+      });
+    } catch (err) {
+      console.error("ML Server Connection Error:", err);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "ML classification server is unreachable. Please ensure the Python ML server is running.",
+        },
+        {
+          status: 503,
+        },
+      );
+    }
 
-        // check if the ML request succeeded
-        if (!mlResponse.ok) {
-        return NextResponse.json(
-            {
-            success: false,
-            message: "Failed to classify image",
-            },
-            {
-            status: 500,
-            },
-        );
-        }
+    // check if the ML request succeeded
+    if (!mlResponse.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Failed to classify image. ML server returned an error.",
+        },
+        {
+          status: 500,
+        },
+      );
+    }
 
         const mlData = await mlResponse.json();
         const articleType = mlData.articleType;
@@ -86,12 +103,13 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        const itemName = name?.trim() || articleType || "Clothing Item";
         const order = await Item.countDocuments({
-            collectionId: collection._id,
-        })
+          collectionId: collection._id,
+        });
         
         await Item.create({
-            name,
+            name: itemName,
             imageUrl,
             collectionId: collection._id,
             articleType,

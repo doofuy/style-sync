@@ -34,7 +34,7 @@ export async function connectDB() {
 
   cached.conn = await cached.promise;
 
-  console.log("MongoDB if fooking Connected");
+  console.log("MongoDB is fooking Connected");
 
   return cached.conn;
 }

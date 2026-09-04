@@ -28,21 +28,21 @@ export async function POST(req: NextRequest) {
     const collections = await Collection.find({
       userId,
     }); // we find all the collections with userId, since we only want to query the logged in user.
-    const collectionIds = collections.map((c) => c._id); // now we find the _id of all those collections which belonged to the user.
+    const collectionIds = collections.map((c) => c._id);
+    const collectionMap = new Map(
+      collections.map((c) => [c._id.toString(), c.name]),
+    );
 
     const items = await Item.find({
       collectionId: {
         $in: collectionIds,
       },
-      articleType: {
-        $ne: null,
-      },
-    }); // here we find all the items which have any of the _id in collectionIds array hence we use the "$in" sign, since we are finding the array. And $ne means not equal
+    });
 
     const wardrobe = items.map((item) => ({
       name: item.name,
       imageUrl: item.imageUrl,
-      articleType: item.articleType,
+      articleType: item.articleType || collectionMap.get(item.collectionId.toString()) || "clothing",
     }));
 
     const mlResponse = await fetch("http://127.0.0.1:8000/recommend-outfit", {

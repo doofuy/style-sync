@@ -6,6 +6,51 @@ import { SetStateAction, useState, useEffect } from "react";
 import SelectedOutfit from "./currentOutfit";
 import CollectionRow from "./collectionRow";
 import { Collection, Item } from "@/types/wardrobe";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import {
+  GraduationCap,
+  Coffee,
+  Heart,
+  Briefcase,
+  Sparkles,
+  Building2,
+  Crown,
+  Plane,
+  Dumbbell,
+  Music,
+  ChevronDown,
+  Check,
+  Wand2,
+  Bot,
+} from "lucide-react";
+
+const OCCASIONS = [
+  { value: "college", label: "College", icon: GraduationCap },
+  { value: "casual", label: "Casual", icon: Coffee },
+  { value: "date", label: "Date", icon: Heart },
+  { value: "interview", label: "Interview", icon: Briefcase },
+  { value: "party", label: "Party", icon: Sparkles },
+  { value: "office", label: "Office", icon: Building2 },
+  { value: "wedding", label: "Wedding", icon: Crown },
+  { value: "travel", label: "Travel", icon: Plane },
+  { value: "gym", label: "Gym", icon: Dumbbell },
+  { value: "festival", label: "Festival", icon: Music },
+];
 
 export default function WardrobeClient() {
   // await auth.protect();
@@ -35,6 +80,19 @@ export default function WardrobeClient() {
   const [aiUploadFile, setAiUploadFile] = useState<File | null>(null);
   const [aiUploadName, setAiUploadName] = useState("");
   const [isAiOrganizing, setIsAiOrganizing] = useState(false);
+
+  // STATE: Outfit Recommendation section
+  const [occasion, setOccasion] = useState("college");
+  const [isRecommending, setIsRecommending] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [recommendedOutfit, setRecommendedOutfit] = useState<Record<
+    string,
+    { name: string; imageUrl?: string; articleType: string } | null
+  > | null>(null);
+
+  const selectedOccasionObj =
+    OCCASIONS.find((o) => o.value === occasion) || OCCASIONS[0];
+  const SelectedIcon = selectedOccasionObj.icon;
 
   console.log("RENDER:", collections);
 
@@ -378,7 +436,7 @@ export default function WardrobeClient() {
 
   // OPERATION: AI Classification and Organization
   const handleAiUploadAndOrganize = async () => {
-    if (!aiUploadFile || !aiUploadName.trim()) return;
+    if (!aiUploadFile) return;
 
     setIsAiOrganizing(true);
     try {
@@ -395,7 +453,6 @@ export default function WardrobeClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: aiUploadName,
           imageUrl: imageUrl,
         }),
       });
@@ -404,7 +461,6 @@ export default function WardrobeClient() {
       if (res.ok && data.success) {
         // 3. Success state
         setAiUploadFile(null);
-        setAiUploadName("");
         showToast("Item organized successfully into " + data.collection + "!");
         
         // 4. Refresh wardrobe data
@@ -417,6 +473,36 @@ export default function WardrobeClient() {
       showToast("An unexpected error occurred during AI Upload.", "error");
     } finally {
       setIsAiOrganizing(false);
+    }
+  };
+
+  // OPERATION: Fetch Outfit Recommendation
+  const handleRecommendOutfit = async () => {
+    setIsRecommending(true);
+    try {
+      const res = await fetch("/api/outfit/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ occasion }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.outfit) {
+        setRecommendedOutfit(data.outfit);
+        showToast(
+          `Outfit recommended for ${occasion.charAt(0).toUpperCase() + occasion.slice(1)}!`,
+        );
+      } else {
+        showToast(
+          data.message || "Failed to get outfit recommendation.",
+          "error",
+        );
+      }
+    } catch (error) {
+      console.error("Recommend Outfit Error:", error);
+      showToast("An unexpected error occurred during recommendation.", "error");
+    } finally {
+      setIsRecommending(false);
     }
   };
 
@@ -755,7 +841,8 @@ export default function WardrobeClient() {
       <div className="mt-8 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
         <div className="mb-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
-            <span>🤖</span> AI Upload
+            <Bot className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            AI Upload
           </h2>
           <p className="text-sm text-slate-500 mt-1">
             Upload a clothing image and let AI automatically organize it into the correct collection.
@@ -815,23 +902,10 @@ export default function WardrobeClient() {
             )}
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-slate-500 mb-1 block">
-              Item Name
-            </label>
-            <input
-              value={aiUploadName}
-              onChange={(e) => setAiUploadName(e.target.value)}
-              placeholder="e.g. Blue Oversized T-Shirt"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-800 p-2.5 text-sm bg-background"
-              disabled={isAiOrganizing}
-            />
-          </div>
-
           <div className="mt-2">
             <button
               onClick={handleAiUploadAndOrganize}
-              disabled={!aiUploadFile || !aiUploadName.trim() || isAiOrganizing}
+              disabled={!aiUploadFile || isAiOrganizing}
               className="w-full sm:w-auto rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium px-6 py-2.5 text-sm transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
             >
               {isAiOrganizing ? (
@@ -849,6 +923,177 @@ export default function WardrobeClient() {
           </div>
         </div>
       </div>
+
+      {/* OUTFIT RECOMMENDATION SECTION */}
+      <Card className="mt-8 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+            Outfit Recommendation
+          </CardTitle>
+          <CardDescription className="text-sm text-slate-500">
+            Select an occasion to get AI-curated outfit recommendations from your wardrobe.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex flex-col gap-5 max-w-xl">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 block">
+                Occasion
+              </label>
+
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    disabled={isRecommending}
+                    className="w-full flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-200 shadow-xs hover:border-violet-500/50 hover:bg-slate-100/60 dark:hover:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-violet-500/20 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-950/70 text-violet-600 dark:text-violet-400 shrink-0">
+                        <SelectedIcon className="w-4 h-4" />
+                      </div>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100 text-base">
+                        {selectedOccasionObj.label}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-slate-400 transition-transform duration-200",
+                        isDropdownOpen && "rotate-180 text-violet-600 dark:text-violet-400"
+                      )}
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="start"
+                  sideOffset={6}
+                  className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[280px] p-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 z-50"
+                >
+                  <DropdownMenuRadioGroup
+                    value={occasion}
+                    onValueChange={(val) => {
+                      setOccasion(val);
+                      setIsDropdownOpen(false);
+                    }}
+                  >
+                    {OCCASIONS.map((occ) => {
+                      const IconComponent = occ.icon;
+                      const isSelected = occasion === occ.value;
+                      return (
+                        <DropdownMenuRadioItem
+                          key={occ.value}
+                          value={occ.value}
+                          className={cn(
+                            "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-150 my-0.5",
+                            isSelected
+                              ? "bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 font-semibold shadow-xs"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                "p-1.5 rounded-lg transition-colors",
+                                isSelected
+                                  ? "bg-violet-200/60 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                              )}
+                            >
+                              <IconComponent className="w-4 h-4" />
+                            </div>
+                            <span className="text-sm">{occ.label}</span>
+                          </div>
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-violet-600 dark:text-violet-400 stroke-[3]" />
+                          )}
+                        </DropdownMenuRadioItem>
+                      );
+                    })}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <div className="mt-1">
+              <Button
+                onClick={handleRecommendOutfit}
+                disabled={isRecommending}
+                size="lg"
+                className="w-full sm:w-auto rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold px-7 py-3 text-sm cursor-pointer flex items-center justify-center gap-2.5 shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 active:scale-[0.99] transition-all duration-200 disabled:opacity-50"
+              >
+                {isRecommending ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Curating Your Outfit...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4" />
+                    <span>Recommend Outfit</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* RECOMMENDED OUTFIT DISPLAY WITH ANIMATION */}
+          {recommendedOutfit && (
+            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-violet-500" />
+                Recommended Outfit for {selectedOccasionObj.label}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {["topwear", "bottomwear", "footwear"].map((slot) => {
+                  const item = recommendedOutfit[slot];
+                  return (
+                    <Card
+                      key={slot}
+                      className="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 transition-all duration-200 flex flex-col items-center text-center border-slate-200/80 dark:border-slate-800 shadow-xs group"
+                    >
+                      <span className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-3">
+                        {slot}
+                      </span>
+                      {item ? (
+                        <>
+                          <div className="w-28 h-28 mb-3 rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-center p-2 group-hover:scale-[1.02] transition-transform duration-200">
+                            {item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="h-full w-full object-contain"
+                              />
+                            ) : (
+                              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate w-full">
+                            {item.name}
+                          </h4>
+                          <span className="text-xs text-slate-500 mt-0.5 font-medium">
+                            {item.articleType}
+                          </span>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-slate-400">
+                          <span className="text-xs italic">No matching item in wardrobe</span>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* OPERATION: Renders the horizontal rows for Sneakers, Caps, and other collections dynamically */}
       <div className="mt-8">

@@ -34,7 +34,7 @@ const ItemSchema = new Schema<IItem>(
 
     articleType: {
       type: String,
-      defaule: null,
+      default: null,
     },
   },
   {

@@ -60,20 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     // business logic
-      // ML response:---
-      const mlResponse = await fetch("http://127.0.0.1:8000/classify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageUrl,
-        }),
-      });
-
-
-      const mlData = await mlResponse.json()
-      const articleType = mlData.articleType
+    const articleType = collection.name;
 
     const count = await Item.countDocuments({
       collectionId,
