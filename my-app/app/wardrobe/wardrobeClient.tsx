@@ -41,6 +41,7 @@ import {
   Camera,
   X,
   ArrowRight,
+  Plus,
 } from "lucide-react";
 import CameraModal from "@/components/camera/CameraModal";
 
@@ -205,6 +206,48 @@ export default function WardrobeClient() {
 
     setCollectionName("");
     setIsModalOpen(false);
+  };
+
+  // HELPER: Retrieves existing collection ID or creates a new collection by category name on the fly
+  const getOrCreateCollection = async (collectionIdOrName: string): Promise<string | null> => {
+    const byId = collections.find((c) => c.id === collectionIdOrName);
+    if (byId) return byId.id;
+
+    const byName = collections.find(
+      (c) => c.name.toLowerCase() === collectionIdOrName.toLowerCase()
+    );
+    if (byName) return byName.id;
+
+    try {
+      const res = await fetch("/api/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: collectionIdOrName }),
+      });
+      const data = await res.json();
+      if (data.success && data.collection) {
+        const newCollection: Collection = {
+          id: data.collection._id || data.collection.id,
+          name: data.collection.name,
+          items: [],
+        };
+        setCollections((prev) => [...prev, newCollection]);
+        return newCollection.id;
+      }
+    } catch (error) {
+      console.error("Failed to auto-create collection:", error);
+    }
+    return null;
+  };
+
+  const handleAddFirstItemToCategory = async (categoryName: string) => {
+    const colId = await getOrCreateCollection(categoryName);
+    if (colId) {
+      setOpenCollectionId(colId);
+      handleOpenItemModal(colId);
+    } else {
+      showToast("Failed to initialize category. Please try again.", "error");
+    }
   };
 
   // STATE: Manage visibility, inputs, and active collection context for the "Add Item" modal
@@ -1391,12 +1434,17 @@ export default function WardrobeClient() {
               </button>
             </div>
 
-            {collections
-              .filter((c) => c.id === openCollectionId)
-              .map((collection) => (
-                <div key={collection.id}>
+            {(() => {
+              const activeColl = collections.find(
+                (c) =>
+                  c.id === openCollectionId ||
+                  c.name.toLowerCase() === openCollectionId.toLowerCase()
+              );
+
+              if (activeColl) {
+                return (
                   <CollectionRow
-                    collection={collection}
+                    collection={activeColl}
                     selectedItems={selectedItems}
                     setSelectedItems={setSelectedItems}
                     onAddItem={handleOpenItemModal}
@@ -1408,8 +1456,52 @@ export default function WardrobeClient() {
                       setPreviewImage({ url, title, subtitle })
                     }
                   />
+                );
+              }
+
+              // Empty uninitialized category
+              return (
+                <div className="w-full select-none">
+                  {/* Top Metadata Bar */}
+                  <div className="flex flex-wrap items-center justify-between border-b border-border pb-6 mb-8 gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[10.5px] uppercase tracking-[0.24em] font-bold px-3.5 py-1.5 bg-muted text-foreground border border-border">
+                        <Check className="w-3.5 h-3.5 text-accent" />
+                        Category: {openCollectionId}
+                      </span>
+                      <span className="text-[10px] uppercase tracking-[0.24em] font-medium text-muted-foreground">
+                        Archived: 0 Pieces
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddFirstItemToCategory(openCollectionId)}
+                      className="inline-flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] font-bold text-foreground hover:bg-muted border border-border px-3.5 py-1.5 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-accent" />
+                      <span>Add Item</span>
+                    </button>
+                  </div>
+
+                  {/* Empty State Lookbook Frame */}
+                  <div className="flex flex-col items-center justify-center py-20 border border-border bg-muted/20 text-center p-8">
+                    <span className="text-xs uppercase tracking-[0.22em] text-muted-foreground font-semibold">
+                      No items in this collection yet
+                    </span>
+                    <p className="font-serif text-sm text-muted-foreground italic mt-2 max-w-md">
+                      Add photographs or upload clothing pieces to start styling and cataloging your {openCollectionId} collection.
+                    </p>
+                    <button
+                      onClick={() => handleAddFirstItemToCategory(openCollectionId)}
+                      className="mt-6 inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-[10.5px] uppercase tracking-[0.22em] font-bold hover:bg-foreground/85 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Item</span>
+                    </button>
+                  </div>
                 </div>
-              ))}
+              );
+            })()}
           </div>
         </div>
       )}

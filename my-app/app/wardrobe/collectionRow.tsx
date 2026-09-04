@@ -90,7 +90,7 @@ export default function CollectionRow({
             className="mt-6 inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 text-[10.5px] uppercase tracking-[0.22em] font-bold hover:bg-foreground/85 transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add First Item</span>
+            <span>Add Item</span>
           </button>
         </div>
       ) : (
@@ -225,14 +225,6 @@ export default function CollectionRow({
             {collection.items.length === 1 ? "piece" : "pieces"} categorized for daily outfit recommendations.
           </p>
         </div>
-
-        <button
-          onClick={() => onAddItem(collection.id)}
-          className="inline-flex items-center justify-center gap-2 bg-foreground text-background uppercase tracking-[0.22em] text-xs font-semibold px-6 py-3 hover:bg-foreground/85 transition-colors cursor-pointer whitespace-nowrap"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Piece</span>
-        </button>
       </div>
     </div>
   );
