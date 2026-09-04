@@ -112,9 +112,9 @@ OCCASION_RULES = {
         "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops", "Sandals"]
     },
     "festival": {
-        "topwear": ["Kurtas", "Tops", "Shirts"],
-        "bottomwear": ["Jeans", "Trousers", "Leggings"],
-        "footwear": ["Casual Shoes", "Sandals", "Flip Flops"]
+        "topwear": ["Kurtas"],
+        "bottomwear": ["Jeans"],
+        "footwear": ["Casual Shoes"]
     }
 }
 
@@ -154,6 +154,16 @@ OCCASION_RULES = {
 #         "outfit": outfit
 #     }
 
+def normalize_type(t: str) -> str:
+    return t.lower().replace(" ", "").replace("-", "").replace("_", "").rstrip("s")
+
+def type_matches(item_type: str, allowed_types: list) -> bool:
+    norm_item = normalize_type(item_type)
+    for allowed in allowed_types:
+        if norm_item == normalize_type(allowed) or item_type.lower() == allowed.lower():
+            return True
+    return False
+
 def recommend_outfit(wardrobe: list, occasion: str):
     occasion = occasion.lower()
 
@@ -171,7 +181,7 @@ def recommend_outfit(wardrobe: list, occasion: str):
         candidates = [
             item
             for item in wardrobe
-            if item["articleType"] in allowed_types
+            if item.get("articleType") and type_matches(item["articleType"], allowed_types)
         ]
 
         if candidates:

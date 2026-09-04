@@ -118,6 +118,136 @@ const OCCASIONS = [
   },
 ];
 
+const OCCASION_FALLBACKS: Record<
+  string,
+  {
+    top: { name: string; category: string; tone: string; image: string };
+    bottom: { name: string; category: string; tone: string; image: string };
+    footwear: { name: string; category: string; tone: string; image: string };
+  }
+> = {
+  festival: {
+    top: {
+      name: "Handcrafted Silk Kurta",
+      category: "Kurtas",
+      tone: "Saffron Ivory",
+      image: "/categories/Kurtas.webp",
+    },
+    bottom: {
+      name: "Tailored Denim Jeans",
+      category: "Jeans",
+      tone: "Washed Indigo",
+      image: "/categories/Jeans.avif",
+    },
+    footwear: {
+      name: "Classic Heritage Loafers",
+      category: "Casual Shoes",
+      tone: "Warm Tan",
+      image: "/categories/Casual Shoes.png",
+    },
+  },
+  college: {
+    top: {
+      name: "Structured Oversized Tee",
+      category: "T-Shirts",
+      tone: "Heather Grey",
+      image: "/categories/Tshirts.png",
+    },
+    bottom: {
+      name: "Straight Cut Denim",
+      category: "Jeans",
+      tone: "Indigo Blue",
+      image: "/categories/Jeans.avif",
+    },
+    footwear: {
+      name: "Minimalist Campus Trainers",
+      category: "Casual Shoes",
+      tone: "Clean White",
+      image: "/categories/Casual Shoes.png",
+    },
+  },
+  date: {
+    top: {
+      name: "Fine Knit Drape Shirt",
+      category: "Shirts",
+      tone: "Midnight Ink",
+      image: "/categories/Shirts.avif",
+    },
+    bottom: {
+      name: "Slim Fit Chino Trousers",
+      category: "Trousers",
+      tone: "Charcoal",
+      image: "/categories/Trousers.webp",
+    },
+    footwear: {
+      name: "Italian Leather Loafers",
+      category: "Formal Shoes",
+      tone: "Deep Ebony",
+      image: "/categories/Formal Shoes.png",
+    },
+  },
+  interview: {
+    top: {
+      name: "Crisp Poplin Button-Down",
+      category: "Shirts",
+      tone: "Pure White",
+      image: "/categories/Shirts.avif",
+    },
+    bottom: {
+      name: "Pleated Wool Trousers",
+      category: "Trousers",
+      tone: "Slate Grey",
+      image: "/categories/Trousers.webp",
+    },
+    footwear: {
+      name: "Oxford Derby Shoes",
+      category: "Formal Shoes",
+      tone: "Polished Black",
+      image: "/categories/Formal Shoes.png",
+    },
+  },
+  casual: {
+    top: {
+      name: "Relaxed Linen Tee",
+      category: "T-Shirts",
+      tone: "Warm Ivory",
+      image: "/categories/Tshirts.png",
+    },
+    bottom: {
+      name: "Vintage Straight Denim",
+      category: "Jeans",
+      tone: "Washed Indigo",
+      image: "/categories/Jeans.avif",
+    },
+    footwear: {
+      name: "Minimalist Casual Sneakers",
+      category: "Casual Shoes",
+      tone: "Warm White",
+      image: "/categories/Casual Shoes.png",
+    },
+  },
+  party: {
+    top: {
+      name: "Satin Evening Shirt",
+      category: "Shirts",
+      tone: "Onyx Black",
+      image: "/categories/Shirts.avif",
+    },
+    bottom: {
+      name: "Tailored Tuxedo Trousers",
+      category: "Trousers",
+      tone: "Midnight",
+      image: "/categories/Trousers.webp",
+    },
+    footwear: {
+      name: "Gloss Leather Dress Shoes",
+      category: "Formal Shoes",
+      tone: "Jet Black",
+      image: "/categories/Formal Shoes.png",
+    },
+  },
+};
+
 export default function WardrobeClient() {
   // await auth.protect();
 
@@ -1245,6 +1375,7 @@ export default function WardrobeClient() {
                     value={occasion}
                     onValueChange={(val) => {
                       setOccasion(val);
+                      setRecommendedOutfit(null);
                       setIsDropdownOpen(false);
                     }}
                   >
@@ -1286,32 +1417,35 @@ export default function WardrobeClient() {
 
           {/* Coordinated Outfit Items — Zero Gutters Sézane Look */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-0 border border-border bg-muted/20">
-            {[
-              {
-                slot: "TOP",
-                fallbackName: "Relaxed Linen Shirt",
-                fallbackCategory: "Shirts",
-                fallbackTone: "Ivory",
-                fallbackImage: "/categories/Shirts.avif",
-                item: recommendedOutfit?.topwear,
-              },
-              {
-                slot: "BOTTOM",
-                fallbackName: "Vintage Straight Denim",
-                fallbackCategory: "Jeans",
-                fallbackTone: "Washed Indigo",
-                fallbackImage: "/categories/Jeans.avif",
-                item: recommendedOutfit?.bottomwear,
-              },
-              {
-                slot: "FOOTWEAR",
-                fallbackName: "Minimalist Casual Sneakers",
-                fallbackCategory: "Casual Shoes",
-                fallbackTone: "Warm White",
-                fallbackImage: "/categories/Casual Shoes.png",
-                item: recommendedOutfit?.footwear,
-              },
-            ].map((slotItem, idx) => {
+            {(() => {
+              const currentFallback = OCCASION_FALLBACKS[occasion] || OCCASION_FALLBACKS.casual;
+              return [
+                {
+                  slot: "TOP",
+                  fallbackName: currentFallback.top.name,
+                  fallbackCategory: currentFallback.top.category,
+                  fallbackTone: currentFallback.top.tone,
+                  fallbackImage: currentFallback.top.image,
+                  item: recommendedOutfit?.topwear,
+                },
+                {
+                  slot: "BOTTOM",
+                  fallbackName: currentFallback.bottom.name,
+                  fallbackCategory: currentFallback.bottom.category,
+                  fallbackTone: currentFallback.bottom.tone,
+                  fallbackImage: currentFallback.bottom.image,
+                  item: recommendedOutfit?.bottomwear,
+                },
+                {
+                  slot: "FOOTWEAR",
+                  fallbackName: currentFallback.footwear.name,
+                  fallbackCategory: currentFallback.footwear.category,
+                  fallbackTone: currentFallback.footwear.tone,
+                  fallbackImage: currentFallback.footwear.image,
+                  item: recommendedOutfit?.footwear,
+                },
+              ];
+            })().map((slotItem, idx) => {
               const name = slotItem.item ? slotItem.item.name : slotItem.fallbackName;
               const category = slotItem.item ? slotItem.item.articleType : slotItem.fallbackCategory;
               const tone = slotItem.fallbackTone;
