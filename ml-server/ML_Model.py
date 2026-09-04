@@ -107,9 +107,14 @@ OCCASION_RULES = {
         "footwear": ["Formal Shoes", "Casual Shoes"]
     },
     "casual": {
-        "topwear": ["Tshirts", "Shirts", "Tops"],
+        "topwear": ["Tshirts", "Tops"],
         "bottomwear": ["Jeans", "Shorts", "Track Pants", "Leggings"],
         "footwear": ["Casual Shoes", "Sports Shoes", "Flip Flops", "Sandals"]
+    },
+    "festival": {
+        "topwear": ["Kurtas", "Tops", "Shirts"],
+        "bottomwear": ["Jeans", "Trousers", "Leggings"],
+        "footwear": ["Casual Shoes", "Sandals", "Flip Flops"]
     }
 }
 
