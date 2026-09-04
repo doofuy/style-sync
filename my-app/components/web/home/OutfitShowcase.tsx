@@ -56,7 +56,7 @@ export default function OutfitShowcase() {
           <div className="flex flex-wrap items-center justify-between border-b border-border pb-6 mb-8 gap-4">
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.24em] font-bold px-3 py-1 bg-muted text-foreground border border-border">
-                <Check className="w-3 h-3 text-accent" /> Occasion: Casual Date
+                <Check className="w-3 h-3 text-accent" /> Occasion: Casual
               </span>
               <span className="text-[10px] uppercase tracking-[0.24em] font-medium text-muted-foreground hidden sm:inline">
                 Weather: 22°C · Clear Sky

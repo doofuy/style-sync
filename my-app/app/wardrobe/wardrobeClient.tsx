@@ -54,14 +54,14 @@ const OCCASIONS = [
   },
   {
     value: "casual",
-    label: "Casual Date",
+    label: "Casual",
     icon: Coffee,
     note: "Clean lines with a relaxed drape. The breathable linen keeps the look elevated yet nonchalant, grounded by classic denim and leather footwear.",
     palette: "Warm Ivory & Indigo",
   },
   {
     value: "date",
-    label: "Evening Date",
+    label: "Date",
     icon: Heart,
     note: "Refined, romantic silhouette with rich textures and understated accents designed for intimate ambiance.",
     palette: "Midnight Ink & Burgundy",
