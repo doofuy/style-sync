@@ -216,6 +216,8 @@ export default function WardrobeClient() {
   const [activeCollectionId, setActiveCollectionId] = useState<string | null>(
     null,
   );
+  const [isCreatingItem, setIsCreatingItem] = useState(false);
+  const [itemError, setItemError] = useState("");
 
   // STATE: Manage visibility, state variables, and upload indicators for the "Edit Image" modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -305,6 +307,7 @@ export default function WardrobeClient() {
     setActiveCollectionId(collectionId);
     setItemName("");
     setItemImageUrl("");
+    setItemError("");
     setIsItemModalOpen(true);
   };
 
@@ -514,15 +517,34 @@ export default function WardrobeClient() {
 
   // OPERATION: Appends a newly created clothing item (with name and optional image) to its collection list
   const handleCreateItem = async () => {
-    if (!itemName.trim()) return;
-    if (!activeCollectionId) return;
+    if (!activeCollectionId) {
+      showToast("No collection selected. Please reopen the modal.", "error");
+      setItemError("No active collection selected.");
+      return;
+    }
+
+    const targetCollection = collections.find((c) => c.id === activeCollectionId);
+    let finalName = itemName.trim();
+
+    // If user provided an image but left name empty, give a clean default name
+    if (!finalName) {
+      if (itemImageUrl.trim()) {
+        finalName = `${targetCollection?.name || "Clothing"} Piece`;
+      } else {
+        setItemError("Please enter an item name or provide an image.");
+        return;
+      }
+    }
+
+    setIsCreatingItem(true);
+    setItemError("");
 
     try {
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: itemName,
+          name: finalName,
           imageUrl: itemImageUrl.trim(),
           collectionId: activeCollectionId,
         }),
@@ -546,15 +568,24 @@ export default function WardrobeClient() {
           ),
         );
         showToast("Item added successfully!");
+        setItemName("");
+        setItemImageUrl("");
+        setItemError("");
+        setActiveCollectionId(null);
+        setIsItemModalOpen(false);
+      } else {
+        const errorMsg = data.message || "Failed to create item. Please try again.";
+        setItemError(errorMsg);
+        showToast(errorMsg, "error");
       }
     } catch (error) {
       console.error("Failed to create item:", error);
+      const networkMsg = "Network error. Failed to save item.";
+      setItemError(networkMsg);
+      showToast(networkMsg, "error");
+    } finally {
+      setIsCreatingItem(false);
     }
-
-    setItemName("");
-    setItemImageUrl("");
-    setActiveCollectionId(null);
-    setIsItemModalOpen(false);
   };
 
   // OPERATION: AI Classification and Organization
@@ -737,6 +768,12 @@ export default function WardrobeClient() {
               Upload an image or paste a URL for this clothing piece.
             </p>
 
+            {itemError && (
+              <div className="mb-4 p-2.5 bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs rounded-sm">
+                {itemError}
+              </div>
+            )}
+
             <div className="flex flex-col gap-4">
               <div>
                 <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1 block">
@@ -744,7 +781,10 @@ export default function WardrobeClient() {
                 </label>
                 <input
                   value={itemName}
-                  onChange={(e) => setItemName(e.target.value)}
+                  onChange={(e) => {
+                    setItemName(e.target.value);
+                    if (itemError) setItemError("");
+                  }}
                   placeholder="e.g. Linen Shirt, Loafers"
                   className="w-full rounded-sm border border-border p-2 text-sm bg-background text-foreground focus:outline-none focus:border-primary"
                 />
@@ -756,7 +796,10 @@ export default function WardrobeClient() {
                 </label>
                 <input
                   value={itemImageUrl}
-                  onChange={(e) => setItemImageUrl(e.target.value)}
+                  onChange={(e) => {
+                    setItemImageUrl(e.target.value);
+                    if (itemError) setItemError("");
+                  }}
                   placeholder="Paste an image link..."
                   className="w-full rounded-sm border border-border p-2 text-sm bg-background text-foreground focus:outline-none focus:border-primary"
                 />
@@ -788,7 +831,7 @@ export default function WardrobeClient() {
                     accept="image/*"
                     onChange={handleItemLocalImageUpload}
                     className="w-full text-xs text-muted-foreground file:mr-2 file:py-1.5 file:px-3 file:rounded-sm file:border-0 file:text-xs file:font-medium file:uppercase file:tracking-wider file:bg-muted file:text-foreground file:cursor-pointer hover:file:opacity-80 transition-opacity cursor-pointer"
-                    disabled={isUploadingItem}
+                    disabled={isUploadingItem || isCreatingItem}
                   />
                 </div>
                 {isUploadingItem && (
@@ -812,18 +855,22 @@ export default function WardrobeClient() {
 
             <div className="mt-6 flex justify-end gap-2">
               <button
-                onClick={() => setIsItemModalOpen(false)}
-                className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                onClick={() => {
+                  setItemError("");
+                  setIsItemModalOpen(false);
+                }}
+                disabled={isCreatingItem}
+                className="rounded-sm border border-border px-4 py-2 text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground cursor-pointer transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleCreateItem}
-                className="rounded-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity px-5 py-2 text-xs uppercase tracking-wider font-medium cursor-pointer disabled:opacity-50"
-                disabled={isUploadingItem}
+                className="rounded-sm bg-primary text-primary-foreground hover:opacity-90 transition-opacity px-5 py-2 text-xs uppercase tracking-wider font-medium cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                disabled={isUploadingItem || isCreatingItem}
               >
-                Create
+                {isCreatingItem ? "Creating..." : "Create"}
               </button>
             </div>
           </div>
