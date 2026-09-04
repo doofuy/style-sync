@@ -45,7 +45,11 @@ export async function POST(req: NextRequest) {
       articleType: item.articleType || collectionMap.get(item.collectionId.toString()) || "clothing",
     }));
 
-    const mlResponse = await fetch("http://127.0.0.1:8000/recommend-outfit", {
+    const mlServerUrl = process.env.ML_SERVER_URL
+      ? `${process.env.ML_SERVER_URL.replace(/\/$/, "")}/recommend-outfit`
+      : "http://127.0.0.1:8000/recommend-outfit";
+
+    const mlResponse = await fetch(mlServerUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
