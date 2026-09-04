@@ -26,12 +26,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dataset path
-DATASET_DIR = "../dataset"
+# Dataset path relative to this script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
 
 # Ensure dataset directory exists
 if not os.path.exists(DATASET_DIR):
-    os.makedirs(DATASET_DIR)
+    os.makedirs(DATASET_DIR, exist_ok=True)
 
 app.mount(
     "/dataset",
@@ -44,8 +45,11 @@ def read_root():
     return {
         "status": "online",
         "message": "Style Sync ML Recommendation Server is running!",
-        
     }
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 @app.post("/recommend")
 
@@ -177,4 +181,5 @@ async def recommend_outfit_endpoint(req: OutfitRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

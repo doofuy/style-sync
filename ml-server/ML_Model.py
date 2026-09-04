@@ -7,20 +7,14 @@ from PIL import Image
 import numpy as np
 # import pickle
 
+import os
 import random
 
-# Load MobileNet model
-# print("Loading MobileNetV2 model...")
-# model = MobileNetV2(
-#     weights='imagenet',
-#     include_top=False,
-#     pooling='avg'
-# )
-# print("MobileNetV2 loaded successfully.")
-
 # Load classifier model
-print("Loading classifier model...")
-classifier = load_model("best_model.keras")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "best_model.keras")
+print(f"Loading classifier model from {MODEL_PATH}...")
+classifier = load_model(MODEL_PATH)
 print("Classifier loaded successfully.")
 
 # Class labels
